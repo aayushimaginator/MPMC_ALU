@@ -1,0 +1,14 @@
+# Vivado build output
+vivado_alu16/
+reports/
+.Xil/
+*.jou
+*.log
+*.str
+*.bit
+usage_statistics_webtalk.*
+webtalk*
+
+# Simulation
+*.vvp
+*.vcd
