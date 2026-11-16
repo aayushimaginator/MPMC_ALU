@@ -32,8 +32,9 @@ shows the operand and the result, LEDs show the opcode and the flags.
 | 7 | SHR | A >> B[3:0] (logical) | 15 | NOP | 0 |
 
 Flags: **Z** result is zero, **C** carry out (borrow for SUB/DEC, shifted-out bit for
-shifts, A < B for LT_U), **V** signed overflow (MUL: product does not fit in 16 signed
-bits), **N** result bit 15.
+shifts, A < B for LT_U), **V** signed overflow for ADD/SUB/INC/DEC (for MUL: the upper
+16 bits of the unsigned 32-bit product differ from the sign extension of Y[15]; see
+Known limitations), **N** result bit 15.
 
 ## Board controls
 
@@ -81,7 +82,8 @@ Expected: `PASS: all 20 tests` and `PASS: top-level`.
 ## Results
 
 - Post-route timing at 100 MHz: setup slack +3.632 ns, hold slack +0.095 ns, no failing endpoints.
-- DRC: 0 errors. Build: 0 warnings, 0 critical warnings (LED10 and LED11 are unused).
+- DRC: 0 errors. Synthesis: 0 errors, 0 critical warnings, 3 warnings (LED10 and LED11 are unused and driven low; the rest are tool-flow notices).
+- Resources: 500 LUTs, 203 flip-flops, 1 DSP48E1.
 - The multiplier maps to one DSP48.
 - Hardware check: every switch, button, LED and display digit verified on the board.
 
@@ -91,6 +93,18 @@ Expected: `PASS: all 20 tests` and `PASS: top-level`.
    must be 0. Found by running the original testbench in simulation.
 2. **Wrong testbench expectation for `SUB 0x8000 - 1`.** The test expected C = 1, but with
    C defined as borrow (as in `3 - 5`), 0x8000 - 1 has no borrow, so C = 0.
+3. **Buttons were first documented by FPGA pin name** (J2, J1, G2, H2), and J2 is also the
+   name of an unrelated connector on the board. All documentation now uses the silkscreen
+   labels BTN0 to BTN3.
+
+## Known limitations
+
+- **The MUL overflow flag is not a signed-overflow flag.** The multiplier is unsigned, so
+  V is also set for negative products that fit in 16 signed bits (for example
+  0xFFFF x 1, which is -1 x 1, and 0x0003 x 0xFFFE, which is 3 x -2). Treat V after MUL
+  as an unsigned-overflow indicator only.
+- The opcode only counts up; returning to an earlier operation takes up to 15 presses.
+- The bitstream is volatile and must be reprogrammed after power loss.
 
 ## Design notes
 
